@@ -7,8 +7,10 @@ from auth import initialize_github_auth
 
 
 def main():
-    """
-    Main entry point for the GitHub Repository Sweeper CLI.
+    """Run the GitHub Repository Sweeper command-line interface.
+    
+    Provides an interactive menu for users to list, search, and delete
+    GitHub repositories. Handles authentication and error cases.
     """
     try:
         print("\n=== GitHub Repo Sweeper ===\n")

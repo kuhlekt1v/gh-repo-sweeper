@@ -36,9 +36,7 @@ def _get_github_token() -> str:
 
 
 def initialize_github_auth() -> Github:
-    """
-    Initialize and validate GitHub authentication, returning a ready-to-use GitHub session.
-
+    """Initialize and validate GitHub authentication, returning a ready-to-use GitHub session.
 
     Returns:
         Github: A fully authenticated Github instance ready for API operations.
