@@ -5,17 +5,29 @@ from github.Repository import Repository
 
 
 class RepoContext:
+    """
+    Context manager for repository operations in GitHub Repo Sweeper.
+
+    Handles listing, searching, and deleting repositories via the GitHub API.
+    """
+
     def __init__(self, gh: Github) -> None:
+        """
+        Initialize the RepoContext.
+
+        Args:
+            gh (Github): An authenticated Github API client.
+        """
         self.gh = gh
         self._to_delete: List[Repository] = []
         self._repos: List[Repository] = []
 
     def _get_repos(self) -> List[Repository]:
         """
-        Get all repositories, fetching from API only once per session.
+        Retrieve all repositories for the authenticated user.
 
         Returns:
-            List of GitHub Repository objects
+            List[Repository]: List of GitHub repositories.
         """
         if len(self._repos) == 0:
             print("Fetching repositories from GitHub API...")
@@ -24,12 +36,21 @@ class RepoContext:
 
         return self._repos
 
-    def _print_repo_names(self, repos: List[Repository]):
+    def _print_repo_names(self, repos: List[Repository]) -> None:
+        """
+        Print repository names and their main language.
+
+        Args:
+            repos (List[Repository]): List of GitHub repositories.
+        """
         for i, repo in enumerate(repos, 1):
             print(f"{i}. {repo.full_name} [{repo.language}]")
 
     def list(self) -> None:
-        """Print all repositories for the authenticated user."""
+        """
+        Print all repositories for the authenticated user.
+        """
+
         repos = self._get_repos()
         if repos:
             self._print_repo_names(repos)
@@ -39,9 +60,11 @@ class RepoContext:
 
     def search(self, keyword: str | None = None, language: str | None = None) -> None:
         """
-        Filter repos by keyword in full_name and/or by language.
-        - keyword: substring match in full_name (case-insensitive).
-        - language: exact language match (case-insensitive).
+        Search for repositories by keyword and/or programming language.
+
+        Args:
+            keyword (str, optional): Keyword to filter repository names.
+            language (str, optional): Main language to filter repositories.
         """
         filtered_repos: List[Repository] = self._get_repos()
         if keyword:
@@ -63,7 +86,13 @@ class RepoContext:
         else:
             print("No matches found.")
 
-    def _delete_by_index(self, repos: List[Repository]):
+    def _delete_by_index(self, repos: List[Repository]) -> None:
+        """
+        Prompt the user for repository indices to delete, and mark them for deletion.
+
+        Args:
+            repos (List[Repository]): List of repositories to choose from.
+        """
         while True:
             index_str = input("Enter indices (e.g., 1,2,3 or 1-3,7-9): ").strip()
             indices: set[int] = set()
@@ -104,7 +133,13 @@ class RepoContext:
                     "Invalid input. Please enter numbers and ranges separated by commas only.\n"
                 )
 
-    def _delete_by_name(self, repos: List[Repository]):
+    def _delete_by_name(self, repos: List[Repository]) -> None:
+        """
+        Prompt the user for repository names to delete, and mark them for deletion.
+
+        Args:
+            repos (List[Repository]): List of repositories to choose from.
+        """
         while True:  # keep prompting until at least one valid repo
             names = input(
                 "Enter full repository names (e.g., username/repo1, username/repo2): "
@@ -134,7 +169,13 @@ class RepoContext:
             self._to_delete = to_delete
             break
 
-    def _confirm_delete(self, repos: List[Repository]):
+    def _confirm_delete(self, repos: List[Repository]) -> None:
+        """
+        Prompt the user for confirmation before deleting repositories.
+
+        Args:
+            repos (List[Repository]): List of repositories to delete.
+        """
         print("\nYou are about to delete the following repositories:")
         for repo in self._to_delete:
             print(f"- {repo.full_name}")
@@ -158,9 +199,12 @@ class RepoContext:
         else:
             print("Deletion canceled.")
 
-    def _delete(self, repos: List[Repository]):
+    def _delete(self, repos: List[Repository]) -> None:
         """
         Delete GitHub repositories either by indices or by repository names.
+
+        Args:
+            repos (List[Repository]): List of repositories to filter and delete.
         """
 
         print("\n=== Delete Repositories ===\n")

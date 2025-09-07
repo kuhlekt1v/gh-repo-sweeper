@@ -7,9 +7,14 @@ from .actions import RepoContext
 from .auth import initialize_github_auth
 
 
-def main():
+def main() -> None:
     """
     Main entry point for the GitHub Repository Sweeper CLI.
+
+    Handles user interaction, menu selection, and error logging.
+
+    Raises:
+        SystemExit: If authentication fails or an unrecoverable error occurs.
     """
     logging.basicConfig(
         filename="sweeper.log",
