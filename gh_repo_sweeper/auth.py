@@ -11,18 +11,13 @@ logger = logging.getLogger(__name__)
 
 def _get_github_token() -> str:
     """
-    Retrieve a GitHub personal access token from saved storage or user input.
-
-    This function first attempts to load a previously saved token. If a token
-    exists, it asks the user whether to use it. If no token exists or the user
-    chooses not to use the saved token, it prompts for a new token and offers
-    to save it for future use.
+    Retrieve a GitHub Personal Access Token (PAT) from the system keyring or prompt the user.
 
     Returns:
-        str: The GitHub personal access token to use for authentication.
+        str: GitHub personal access token.
 
     Raises:
-        Exception: If authentication fails or the token is invalid, with status code and message.
+        ValueError: If no token is entered by the user.
     """
     token = load_token()
     if token:
@@ -39,12 +34,13 @@ def initialize_github_auth() -> Github:
     """
     Initialize and validate GitHub authentication, returning a ready-to-use GitHub session.
 
-
     Returns:
         Github: A fully authenticated Github instance ready for API operations.
 
     Raises:
-        Exception: If authentication fails or the token is invalid.
+        BadCredentialsException: If the provided token is invalid.
+        GithubException: For other GitHub API errors.
+        Exception: For unexpected or unknown errors.
     """
     token = _get_github_token()
     auth = Auth.Token(token)
