@@ -1,3 +1,5 @@
+from typing import List
+
 from github import Github
 from github.Repository import Repository
 
@@ -5,20 +7,35 @@ from github.Repository import Repository
 class RepoContext:
     def __init__(self, gh: Github) -> None:
         self.gh = gh
-        self._to_delete: list[Repository] = []
-        self._available_repos: list[Repository] = []
+        self._to_delete: List[Repository] = []
+        self._repos: List[Repository] = []
 
-    def _print_repo_names(self):
-        for i, repo in enumerate(self._available_repos, 1):
+    def _get_repos(self) -> List[Repository]:
+        """
+        Get all repositories, fetching from API only once per session.
+
+        Returns:
+            List of GitHub Repository objects
+        """
+        if len(self._repos) == 0:
+            print("Fetching repositories from GitHub API...")
+            user = self.gh.get_user()
+            self._repos = list(user.get_repos())
+
+        return self._repos
+
+    def _print_repo_names(self, repos: List[Repository]):
+        for i, repo in enumerate(repos, 1):
             print(f"{i}. {repo.full_name} [{repo.language}]")
 
     def list(self) -> None:
         """Print all repositories for the authenticated user."""
-        self._available_repos = list(self.gh.get_user().get_repos())
-        self._print_repo_names()
-
-        if self._available_repos:
-            self._delete()
+        repos = self._get_repos()
+        if repos:
+            self._print_repo_names(repos)
+            self._delete(repos)
+        else:
+            print("No repositories found.")
 
     def search(self, keyword: str | None = None, language: str | None = None) -> None:
         """
@@ -26,32 +43,30 @@ class RepoContext:
         - keyword: substring match in full_name (case-insensitive).
         - language: exact language match (case-insensitive).
         """
-        results = self._available_repos
-
+        filtered_repos: List[Repository] = self._get_repos()
         if keyword:
             keyword = keyword.lower()
-            results = [r for r in results if keyword in r.full_name.lower()]
-
-        if language:
-            results = [
-                r
-                for r in results
-                if r.language and r.language.lower() == language.lower()
+            filtered_repos = [
+                r for r in filtered_repos if keyword in r.full_name.lower()
             ]
 
-        if not results:
+        if language:
+            filtered_repos = [
+                r
+                for r in filtered_repos
+                if r.language and r.language.lower() == language.lower()
+            ]
+        if filtered_repos:
+            self._print_repo_names(filtered_repos)
+            self._delete(filtered_repos)
+
+        else:
             print("No matches found.")
-            return
 
-        # Replace available_repos with filtered set
-        self._available_repos = results
-        self._print_repo_names()
-        self._delete()
-
-    def _delete_by_index(self):
+    def _delete_by_index(self, repos: List[Repository]):
         while True:
             index_str = input("Enter indices (e.g., 1,2,3 or 1-3,7-9): ").strip()
-            indices = set()
+            indices: set[int] = set()
 
             try:
                 # Parse comma-separated values and ranges
@@ -62,17 +77,17 @@ class RepoContext:
 
                     if "-" in item:
                         start, end = map(int, item.split("-"))
-                        if start < 1 or end > len(self._available_repos):
+                        if start < 1 or end > len(repos):
                             print(
-                                f"Invalid range {start}-{end}. Indices must be between 1 and {len(self._available_repos)}."
+                                f"Invalid range {start}-{end}. Indices must be between 1 and {len(repos)}."
                             )
                             continue
                         indices.update(range(start, end + 1))
                     else:
                         idx = int(item)
-                        if idx < 1 or idx > len(self._available_repos):
+                        if idx < 1 or idx > len(repos):
                             print(
-                                f"Invalid index {idx}. Must be between 1 and {len(self._available_repos)}."
+                                f"Invalid index {idx}. Must be between 1 and {len(repos)}."
                             )
                             continue
                         indices.add(idx)
@@ -81,9 +96,7 @@ class RepoContext:
                     continue
 
                 # Convert indices to repositories (adjust for 0-based indexing)
-                self._to_delete = [
-                    self._available_repos[i - 1] for i in sorted(indices)
-                ]
+                self._to_delete = [repos[i - 1] for i in sorted(indices)]
                 break
 
             except ValueError:
@@ -91,7 +104,7 @@ class RepoContext:
                     "Invalid input. Please enter numbers and ranges separated by commas only.\n"
                 )
 
-    def _delete_by_name(self):
+    def _delete_by_name(self, repos: List[Repository]):
         while True:  # keep prompting until at least one valid repo
             names = input(
                 "Enter full repository names (e.g., username/repo1, username/repo2): "
@@ -106,9 +119,7 @@ class RepoContext:
 
             for name in name_list:
                 matching_repos = [
-                    repo
-                    for repo in self._available_repos
-                    if repo.full_name.lower() == name.lower()
+                    repo for repo in repos if repo.full_name.lower() == name.lower()
                 ]
                 if matching_repos:
                     to_delete.extend(matching_repos)
@@ -123,7 +134,7 @@ class RepoContext:
             self._to_delete = to_delete
             break
 
-    def _confirm_delete(self):
+    def _confirm_delete(self, repos: List[Repository]):
         print("\nYou are about to delete the following repositories:")
         for repo in self._to_delete:
             print(f"- {repo.full_name}")
@@ -140,20 +151,17 @@ class RepoContext:
             for repo in self._to_delete:
                 try:
                     repo.delete()
-                    self._available_repos.remove(repo)
+                    repos.remove(repo)
                     print(f"✓ Deleted {repo.full_name}")
                 except Exception as e:
                     print(f"✗ Failed to delete {repo.full_name}: {e}")
         else:
             print("Deletion canceled.")
 
-    def _delete(self):
+    def _delete(self, repos: List[Repository]):
         """
         Delete GitHub repositories either by indices or by repository names.
         """
-        if not self._available_repos:
-            print("No repositories to delete.")
-            return
 
         print("\n=== Delete Repositories ===\n")
 
@@ -168,10 +176,10 @@ class RepoContext:
             ).strip()
 
             if choice == "1":
-                self._delete_by_index()
+                self._delete_by_index(repos)
                 break
             elif choice == "2":
-                self._delete_by_name()
+                self._delete_by_name(repos)
                 break
             elif choice == "3":
                 print("Deletion canceled.")
@@ -180,4 +188,4 @@ class RepoContext:
                 print("Invalid choice. Please enter 1, 2, or 3.\n")
 
         if self._to_delete:
-            self._confirm_delete()
+            self._confirm_delete(repos)

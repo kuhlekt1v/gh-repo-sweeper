@@ -1,15 +1,22 @@
+import logging
 import sys
 
 from github.GithubException import BadCredentialsException, GithubException
 
-from actions import RepoContext
-from auth import initialize_github_auth
+from .actions import RepoContext
+from .auth import initialize_github_auth
 
 
 def main():
     """
     Main entry point for the GitHub Repository Sweeper CLI.
     """
+    logging.basicConfig(
+        filename="sweeper.log",
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    )
+
     try:
         print("\n=== GitHub Repo Sweeper ===\n")
         print(

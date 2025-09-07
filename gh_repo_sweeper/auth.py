@@ -4,7 +4,7 @@ import logging
 from github import Auth, Github
 from github.GithubException import BadCredentialsException, GithubException
 
-from config import load_token, save_token
+from .config import load_token, save_token
 
 logger = logging.getLogger(__name__)
 
