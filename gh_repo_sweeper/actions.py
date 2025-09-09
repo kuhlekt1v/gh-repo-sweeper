@@ -196,6 +196,9 @@ class RepoContext:
                     print(f"✓ Deleted {repo.full_name}")
                 except Exception as e:
                     print(f"✗ Failed to delete {repo.full_name}: {e}")
+
+            self._repos = repos
+
         else:
             print("Deletion canceled.")
 
