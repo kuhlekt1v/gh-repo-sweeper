@@ -192,12 +192,10 @@ class RepoContext:
             for repo in self._to_delete:
                 try:
                     repo.delete()
-                    repos.remove(repo)
+                    self._repos.remove(repo)
                     print(f"✓ Deleted {repo.full_name}")
                 except Exception as e:
                     print(f"✗ Failed to delete {repo.full_name}: {e}")
-
-            self._repos = repos
 
         else:
             print("Deletion canceled.")
