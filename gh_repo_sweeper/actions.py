@@ -86,6 +86,22 @@ class RepoContext:
         else:
             print("No matches found.")
 
+    def _check_cancel_delete(self, c: str) -> bool:
+        """
+        Check if the user input is a cancel command ('c' or 'C').
+
+        Args:
+            c (str): The user input string to check.
+
+        Returns:
+            bool: True if the input is a cancel command and deletion is canceled, False otherwise.
+        """
+        if c.strip().lower() == "c":
+            print("Deletion canceled.")
+            self._to_delete = []
+            return True
+        return False
+
     def _delete_by_index(self, repos: List[Repository]) -> None:
         """
         Prompt the user for repository indices to delete, and mark them for deletion.
@@ -94,7 +110,12 @@ class RepoContext:
             repos (List[Repository]): List of repositories to choose from.
         """
         while True:
-            index_str = input("Enter indices (e.g., 1,2,3 or 1-3,7-9): ").strip()
+            print("Enter indices (e.g., 1,2,3 or 1-3,7-9) OR press 'c' to cancel.\n")
+            index_str = input("> ").strip()
+
+            if self._check_cancel_delete(index_str):
+                return
+
             indices: set[int] = set()
 
             try:
@@ -141,9 +162,12 @@ class RepoContext:
             repos (List[Repository]): List of repositories to choose from.
         """
         while True:  # keep prompting until at least one valid repo
-            names = input(
-                "Enter full repository names (e.g., username/repo1, username/repo2): "
-            ).strip()
+            print(
+                "Enter full repository names (e.g., username/repo1, username/repo2) OR press 'c' to cancel.\n"
+            )
+            names = input("> ").strip()
+            if self._check_cancel_delete(names):
+                return
 
             if not names:
                 print("No repository names provided. Please try again.\n")
