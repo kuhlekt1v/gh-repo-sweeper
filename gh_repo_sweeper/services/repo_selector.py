@@ -20,7 +20,7 @@ class RepoSelector:
                 repo for repo in self.repos if repo.full_name.lower() == name.lower()
             ]
             if matching_repos:
-                selected.append(matching_repos)
+                selected.extend(matching_repos)
             else:
                 not_found.append(name)
 

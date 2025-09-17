@@ -5,6 +5,7 @@ from typing import List
 from github.GithubException import BadCredentialsException, GithubException
 from github.Repository import Repository
 
+from gh_repo_sweeper.models.delete_result import DeleteResult
 from gh_repo_sweeper.services.auth_service import initialize_github_auth
 from gh_repo_sweeper.services.repo_service import RepoService
 
@@ -21,6 +22,14 @@ def _print_repo_names(repos: List[Repository]) -> None:
     else:
         for i, repo in enumerate(repos, 1):
             print(f"{i}. {repo.full_name} [{repo.language}]")
+
+
+def _print_delete_results(results: DeleteResult | None) -> None:
+    if results:
+        for repo in results["success"]:
+            print(f"✓ Deleted {repo.full_name}")
+        for repo, e in results["fail"]:
+            print(f"✗ Failed to delete {repo.full_name}: {e}")
 
 
 def _prompt_search() -> tuple[str | None, str | None]:
@@ -98,7 +107,8 @@ def main() -> None:
                 _print_repo_names(repos)
 
                 if repos:
-                    service.delete(repos)
+                    results = service.delete(repos)
+                    _print_delete_results(results)
 
             elif choice == "2":
                 print("\n=== Search Repositories ===\n")
@@ -109,7 +119,8 @@ def main() -> None:
                 _print_repo_names(repos)
 
                 if repos:
-                    service.delete(repos)
+                    results = service.delete(repos)
+                    _print_delete_results(results)
 
             elif choice == "3":
                 print("Exiting GitHub Repo Sweeper. Press enter to exit...")
@@ -129,3 +140,7 @@ def main() -> None:
         sys.exit(1)
     except Exception as e:
         print(f"\nUnexpected error: {type(e).__name__}: {e}")
+
+
+if __name__ == "__main__":
+    main()

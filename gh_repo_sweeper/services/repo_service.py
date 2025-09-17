@@ -3,6 +3,8 @@ from typing import List
 from github import Github
 from github.Repository import Repository
 
+from gh_repo_sweeper.models.delete_result import DeleteResult
+
 from .delete_command import DeleteCommand
 
 
@@ -67,5 +69,13 @@ class RepoService:
 
         return filtered_repos
 
-    def delete(self, repos: List[Repository]):
-        DeleteCommand(repos).run()
+    def delete(self, repos: List[Repository]) -> DeleteResult | None:
+        results = DeleteCommand(repos).run()
+        if results:
+            self._repos = [
+                repo
+                for repo in self._repos
+                if repo.name not in [r.name for r in results["success"]]
+            ]
+
+        return results

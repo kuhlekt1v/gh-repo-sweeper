@@ -2,6 +2,8 @@ from typing import List
 
 from github.Repository import Repository
 
+from gh_repo_sweeper.models.delete_result import DeleteResult
+
 from .repo_selector import RepoSelector
 
 
@@ -41,18 +43,19 @@ class DeleteCommand:
             print(f"- {repo.full_name}")
         return input("\nAre you sure? Type 'yes' to confirm: ").strip().lower() == "yes"
 
-    def _delete(self, repos: List[Repository]):
-        results = []
+    def _delete(self, repos: List[Repository]) -> DeleteResult:
+        success = []
+        fail = []
         for repo in repos:
             try:
                 repo.delete()
                 repos.remove(repo)
-                results.append(f"✓ Deleted {repo.full_name}")
+                success.append(repo)
             except Exception as e:
-                results.append(f"✗ Failed to delete {repo.full_name}: {e}")
-        return results
+                fail.append((repo, e))
+        return {"success": success, "fail": fail}
 
-    def run(self):
+    def run(self) -> DeleteResult | None:
         selector = RepoSelector(self.repos)
 
         print("\n=== Delete Repositories ===\n")
@@ -70,13 +73,11 @@ class DeleteCommand:
                 repos_to_delete = self._prompt_names(selector)
             elif choice == "3":
                 print("Deletion canceled.")
-                return
+                return None
             else:
                 print("Invalid choice.\n")
                 continue
 
             if repos_to_delete and self._confirm(repos_to_delete):
                 results = self._delete(repos_to_delete)
-                for r in results:
-                    print(r)
-            break
+                return results
