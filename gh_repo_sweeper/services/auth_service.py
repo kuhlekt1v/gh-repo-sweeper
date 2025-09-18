@@ -4,7 +4,7 @@ import logging
 from github import Auth, Github
 from github.GithubException import BadCredentialsException, GithubException
 
-from .config import load_token, save_token
+from ..config import load_token, save_token
 
 logger = logging.getLogger(__name__)
 
@@ -32,20 +32,19 @@ def _get_github_token() -> str:
 
 def initialize_github_auth() -> Github:
     """
-    Initialize and validate GitHub authentication, returning a ready-to-use GitHub session.
+    Initialize and validate GitHub authentication, returning an authenticated Github instance.
 
     Returns:
-        Github: A fully authenticated Github instance ready for API operations.
+        Github: Authenticated Github instance.
 
     Raises:
         BadCredentialsException: If the provided token is invalid.
         GithubException: For other GitHub API errors.
-        Exception: For unexpected or unknown errors.
+        Exception: For unexpected errors.
     """
     token = _get_github_token()
     auth = Auth.Token(token)
 
-    # Create and validate Github session
     try:
         github_session = Github(auth=auth)
         login_user = github_session.get_user().login  # Test API call to validate auth
